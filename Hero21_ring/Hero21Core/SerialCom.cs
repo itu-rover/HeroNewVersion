@@ -25,6 +25,7 @@ namespace Hero21Core
 
         private static int receiveCounter = 0;
         private static int resetCounter = 0;
+        public static bool didReset = false;
         private static bool receiveFlag = false;
         private static int[] incomingData = new int[30];    // 30 is arbitrarily given (24 + 1)
         public static bool assignCommands = false;
@@ -218,6 +219,7 @@ namespace Hero21Core
                     RoboticArm.ResetArmSensors(RoboticArm.armHomePositions);
                     Debug.Print("RESET ARM SENSORS");
                     resetCounter = 0;
+                    didReset = true;
                 }
             }
         }

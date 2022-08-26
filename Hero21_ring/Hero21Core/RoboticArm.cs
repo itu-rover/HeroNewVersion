@@ -31,10 +31,10 @@ namespace Hero21Core
         // 0 -> position command, 1 -> velocity command ...
 
 
-        public static int[] armHomePositions = {2048, 1024, 1024, 81920, 20480, 81920 };
+        public static int[] armHomePositions = {2048, 1024, 0, 81920, 20480, 81920 };
         public static int[] armPositionCommands = new int[armMotorNum];
         public static double[] armEffortCommands = new double[armMotorNum+1];
-        private static int[] prevEncoderData = { 2048, 1024, 1024, 81920, 20480, 81920 };
+        private static int[] prevEncoderData = { 2048, 1024, 0, 81920, 20480, 81920 };
 
 
         /*
@@ -79,36 +79,52 @@ namespace Hero21Core
         public static void SetAxisSpecificParams()
         {
             // AXIS 1
-            armAxis1.Config_kP(0, 10f, timeOutMs);
-            armAxis1.Config_kI(0, 0.015f, timeOutMs);
-            //armAxis1.ConfigClosedloopRamp(0.452f, timeOutMs);
-            armAxis1.ConfigAllowableClosedloopError(0, 10, timeOutMs);
+            armAxis1.Config_kP(0, 60f, timeOutMs);
+            armAxis1.ConfigMotionAcceleration(20, timeOutMs);
+            armAxis1.ConfigMotionCruiseVelocity(10, timeOutMs);
+            armAxis1.ConfigMotionSCurveStrength(1, timeOutMs);
 
             // AXIS 2
-            armAxis2.Config_kP(0, 40f, timeOutMs);
-            armAxis2.ConfigClosedloopRamp(0.2f, timeOutMs);
-            armAxis2.ConfigAllowableClosedloopError(0, 2, timeOutMs);
+            armAxis2.Config_kP(0, 30f, timeOutMs);
+            armAxis2.ConfigMotionAcceleration(18, timeOutMs);
+            armAxis2.ConfigMotionCruiseVelocity(9, timeOutMs);
+            armAxis2.ConfigMotionSCurveStrength(1, timeOutMs);
 
             // AXIS 3
-            armAxis3.Config_kP(0, 20f, timeOutMs);
-            armAxis3.ConfigClosedloopRamp(0.5f, timeOutMs);
-            armAxis3.ConfigAllowableClosedloopError(0, 2, timeOutMs);
+            armAxis3.Config_kP(0, 60f, timeOutMs);
+            armAxis3.ConfigMotionAcceleration(250, timeOutMs);
+            armAxis3.ConfigMotionCruiseVelocity(350, timeOutMs);
+            armAxis3.ConfigMotionSCurveStrength(1, timeOutMs);
 
             // AXIS 4
-            armAxis4.Config_kP(0, 10f, timeOutMs);
-            //armAxis4.ConfigAllowableClosedloopError(0, 20, timeOutMs);
+            armAxis4.Config_kP(0, 45f, timeOutMs);
+            armAxis4.ConfigMotionAcceleration(600, timeOutMs);
+            armAxis4.ConfigMotionCruiseVelocity(350, timeOutMs);
+            armAxis4.ConfigMotionSCurveStrength(1, timeOutMs);
 
             // AXIS 5
-            armAxis5.Config_kP(0, 10f, timeOutMs);
-            //armAxis5.ConfigAllowableClosedloopError(0, 20, timeOutMs);
+            armAxis5.Config_kP(0, 45f, timeOutMs);
+            armAxis5.ConfigMotionAcceleration(600, timeOutMs);
+            armAxis5.ConfigMotionCruiseVelocity(350, timeOutMs);
+            armAxis5.ConfigMotionSCurveStrength(1, timeOutMs);
 
             // AXIS 6
-            armAxis6.Config_kP(0, 10f, timeOutMs);
-            //armAxis6.ConfigAllowableClosedloopError(0, 20, timeOutMs);
+            armAxis6.Config_kP(0, 45f, timeOutMs);
+            armAxis6.ConfigMotionAcceleration(600, timeOutMs);
+            armAxis6.ConfigMotionCruiseVelocity(350, timeOutMs);
+            armAxis6.ConfigMotionSCurveStrength(1, timeOutMs);
+            Watchdog.Feed();
+
+
+            // AXIS 6
+            armGripper.Config_kP(0, 12f, timeOutMs);
+            armGripper.ConfigMotionAcceleration(50, timeOutMs);
+            armGripper.ConfigMotionCruiseVelocity(5, timeOutMs);
+            armGripper.ConfigMotionSCurveStrength(1, timeOutMs);
             Watchdog.Feed();
 
             //armGripper.ConfigVoltageCompSaturation(12, timeOutMs);
-           
+
         }
 
         /*
@@ -118,15 +134,15 @@ namespace Hero21Core
         {
             armAxis1.SetSensorPhase(false);            
             armAxis2.SetSensorPhase(true);            
-            armAxis3.SetSensorPhase(true);           
+            armAxis3.SetSensorPhase(false);           
             armAxis4.SetSensorPhase(true);            
             armAxis5.SetSensorPhase(true);
             armAxis6.SetSensorPhase(true);
             //armGripper.SetSensorPhase(true);            
             Watchdog.Feed();
-            armAxis2.SetInverted(false);
+            armAxis1.SetInverted(false);
             armAxis2.SetInverted(true);
-            armAxis3.SetInverted(true);
+            armAxis3.SetInverted(false);
             armAxis4.SetInverted(true);
             armAxis5.SetInverted(true);
             armAxis6.SetInverted(true);
@@ -187,19 +203,20 @@ namespace Hero21Core
          */
         public static void SetPositionCommand()
         {
-            DebugClass.LogSysCommands(DebugClass.SysDebugModes.position,armMotorNum,armPositionCommands);
-            double maxFeedForward = 0.25;
+            DebugClass.LogSysCommands(DebugClass.SysDebugModes.position, armMotorNum, armPositionCommands);
+            double maxFeedForward = -0.6;
 
             // This is the angle of 2nd and 3rd joint combined. 0 radians corresponds to where the arm is perpendicular to the ground. 
-            double currentAngle = ((double)prevEncoderData[1] / 2048.0 + (double)prevEncoderData[1] / 2048.0 - 1) * System.Math.PI;
+            //double currentAngle = ((double)prevEncoderData[1] / 2048.0 + (double)prevEncoderData[1] / 2048.0 - 1) * System.Math.PI;
 
-            armAxis1.Set(ControlMode.Position, Utils.Clamp(armPositionCommands[0],0,4096));
-            armAxis2.Set(ControlMode.Position, Utils.Clamp(armPositionCommands[1],512,1536));
-            armAxis3.Set(ControlMode.Position, Utils.Clamp(armPositionCommands[2],512,1024+512),
-                                DemandType.ArbitraryFeedForward, maxFeedForward * System.Math.Cos(currentAngle));
-            armAxis4.Set(ControlMode.Position, ((int)(((double)armPositionCommands[3] / 9999) * 81920 * 2)));            
-            armAxis5.Set(ControlMode.Position, ((int)(((double)armPositionCommands[4] / 9999) * 20480 * 2)));
-            armAxis6.Set(ControlMode.Position, ((int)(((double)armPositionCommands[5] / 9999) * 81920 * 2)));
+            armAxis1.Set(ControlMode.MotionMagic, Utils.Clamp(armPositionCommands[0], 0, 4096));
+            armAxis2.Set(ControlMode.MotionMagic, Utils.Clamp(armPositionCommands[1], 224, 1024 + 600));
+            armAxis3.Set(ControlMode.MotionMagic, Utils.Clamp((int)Utils.Map((double)armPositionCommands[2], 0, 9999, 0, 49152), 1000, 49152));
+            //armAxis3.Set(ControlMode.MotionMagic, Utils.Clamp(armPositionCommands[2], 1000, 49152),
+            //                    DemandType.ArbitraryFeedForward, maxFeedForward * System.Math.Cos(currentAngle));
+            armAxis4.Set(ControlMode.MotionMagic, ((int)(((double)armPositionCommands[3] / 9999) * 81920 * 2)));
+            armAxis5.Set(ControlMode.MotionMagic, ((int)(((double)armPositionCommands[4] / 9999) * 20480 * 2)));
+            armAxis6.Set(ControlMode.MotionMagic, ((int)(((double)armPositionCommands[5] / 9999) * 81920 * 2)));
             armGripper.Set(ControlMode.PercentOutput, 0.0);
             Watchdog.Feed();
 
@@ -283,11 +300,11 @@ namespace Hero21Core
             Watchdog.Feed();
 
             encoderData[1] = armAxis2.GetSelectedSensorPosition();
-            encoderStr[1] = Utils.Clamp(encoderData[1], 0, 1024 + 512).ToString("D4");
+            encoderStr[1] = Utils.Clamp(encoderData[1], 224, 1024 + 600).ToString("D4");
             Watchdog.Feed();
 
             encoderData[2] = armAxis3.GetSelectedSensorPosition();
-            encoderStr[2] = Utils.Clamp(encoderData[2], 512, 1024+512).ToString("D4");
+            encoderStr[2] = ((int)Utils.Map(Utils.Clamp(encoderData[2], 0, 49152), 0, 49152, 0, 9999)).ToString("D4");
             Watchdog.Feed();
 
             encoderData[3] = armAxis4.GetSelectedSensorPosition();
@@ -392,7 +409,7 @@ namespace Hero21Core
         {
             for (int i = 0; i < armMotorNum; i++)
             {
-                if (encoderData[i] == 0)
+                if (encoderData[i] == 0 && i != 2)
                     return true;
             }
             return false;
